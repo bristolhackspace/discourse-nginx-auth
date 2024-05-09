@@ -1,0 +1,84 @@
+{
+	"apps": {
+		"http": {
+			"servers": {
+				"srv0": {
+					"listen": [
+						":443"
+					],
+					"routes": [
+						{
+							"match": [
+								{
+									"host": [
+										"localhost"
+									]
+								}
+							],
+							"handle": [
+								{
+									"handler": "subroute",
+									"routes": [
+										{
+											"handle": [
+												{
+													"handler": "authentication",
+													"providers": {
+															"jwt": {
+																	"from_cookies": ["jwtauth"],
+																	"sign_key": "sssecret"
+															}
+													}
+												},
+												{
+													"handler": "static_response",
+													"body": "Hello world!"
+												}
+											]
+										}
+									],
+									"errors": {
+										"routes": [{
+											"match": [{"expression": "{http.error.status_code} == 401"}],
+											"handle": [
+												{
+													"handler": "invoke",
+													"name": "discourse_proxy"
+												}
+											]
+										}]
+									}
+								}
+							],
+							"terminal": true
+						}
+					],
+					"named_routes": {
+						"discourse_proxy": {
+							"handle": [
+								{
+									"handler": "reverse_proxy",
+									"upstreams": [
+										{
+											"dial": ":5000"
+										}
+									],
+									"headers": {
+										"request": {
+											"set": {
+												"X-Original-Uri": ["{http.request.scheme}://{http.request.hostport}{http.request.orig_uri}"]
+											}
+										}
+									},
+									"rewrite": {
+										"uri": "/login"
+									}
+								}
+							]
+						}
+					}
+				}
+			}
+		}
+	}
+}

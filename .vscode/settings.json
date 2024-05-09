@@ -1,0 +1,10 @@
+{
+    "json.schemas": [
+        {
+            "fileMatch": [
+                "Caddyfile.json"
+            ],
+            "url": "./caddy_schema.json"
+        }
+    ]
+}
